@@ -1,10 +1,7 @@
 **Môi trường:** Kaggle Notebook (Ngôn ngữ R).
 
 **Lưu ý:**
-Cập nhật đường dẫn file dữ liệu trong code cho phù hợp với môi trường . 
-```R
-df <- read.csv("/kaggle/input/datasets/longle0125/gpu-ready-for-models/gpu_ready_for_models.csv")
-```
+gpu_clean đọc từ file "gpu_clean.csv" đã được làm sạch dữ liệu. 
 
 Giải quyết 2 bài toán (Kiểm định 1 mẫu và Kiểm định 2 mẫu). Mỗi bài toán được chia thành 4 bước
 

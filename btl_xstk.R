@@ -7,15 +7,18 @@ library(GGally)
 library(car)
 library(leaps)
 library(lmtest)
-gpu_raw <- read.csv("All_GPUs.csv")
+gpu_raw <- read.csv("/kaggle/input/datasets/iliassekkaf/computerparts/All_GPUs.csv")
+cat("----------------------- TIỀN XỬ LÝ DỮ LIỆU -----------------------")
+cat("\n--- DỮ LIỆU THÔ BAN ĐẦU ---\n")
 head(gpu_raw)
 
 gpu_data <- gpu_raw[, c("Manufacturer", "Core_Speed", "Max_Power", "Memory_Type",
                    "Memory", "Memory_Bandwidth", "Memory_Speed", "Memory_Bus", 
                    "Process", "ROPs", "TMUs", "Notebook_GPU") ]
+cat("\n--- DỮ LIỆU THÔ BAN ĐẦU SAU KHI CHỌN 12 CỘT DỮ LIỆU QUAN TRỌNG ---\n")
 head(gpu_data)
 
-
+cat("\n---XỬ LÍ ĐỊNH DẠNG DỮ LIỆU---\n")
 process_multiplier <- function(column) {
   column <- as.character(column)
   
@@ -58,7 +61,7 @@ gpu_clean <- gpu_data %>%
 filter(Manufacturer %in% c("Nvidia", "AMD", "Intel", "ATI"))
 
 head(gpu_clean)
-
+cat("\n---XỬ LÍ DỮ LIỆU BỊ KHUYẾT (NA)---\n")
 na_summary <- data.frame(
   Variable = names(gpu_clean),
   Missing_Count = colSums(is.na(gpu_clean)),
@@ -73,6 +76,7 @@ print(na_summary)
 # 1. Nhóm biến Memory_Bandwidth, Memory_Bus ... có tỷ lệ khuyết cực thấp 
 #    => Xóa các dòng khuyết (Drop NA) để giữ tính chân thực của dữ liệu mục tiêu.
 # 2. Nhóm biến Core_Speed, Process, Memory_Speed... có tỷ lệ khuyết nhiều
+                     
 gpu_clean <- gpu_clean %>%
   drop_na(Memory_Type, Memory_Bus, Memory_Speed, Memory_Bandwidth)
 
@@ -87,14 +91,18 @@ gpu_clean <- gpu_clean %>%
     Max_Power = ifelse(is.na(Max_Power), median(Max_Power, na.rm = TRUE), Max_Power)
   )
 # Kiểm tra lại chắc chắn đã hết NA chưa
+cat("\n Kiểm tra sau khi làm sạch \n")
 print(colSums(is.na(gpu_clean)))
 
-  gpu_clean $ Manufacturer<-as.factor(gpu_clean$Manufacturer)
+cat("\n---THỐNG KÊ MÔ TẢ---\n")
+cat("\n---Kiểm tra các giá trị đặc trưng của mẫu---\n")
+gpu_clean $ Manufacturer<-as.factor(gpu_clean$Manufacturer)
 gpu_clean $ Memory_Type<-as.factor(gpu_clean$Memory_Type)
 summary(gpu_clean)
 
 
 # 1. Pie : manufacturer
+
 pie_manuf <- gpu_clean %>% 
   count(Manufacturer) %>% 
   mutate(prop = n / sum(n) * 100,
@@ -108,6 +116,7 @@ pie_manuf <- gpu_clean %>%
 print(pie_manuf)
 
 # 2. Pie Chart: Notebook GPU
+
 pie_notebook <- gpu_clean %>% 
   count(Notebook_GPU) %>% 
   mutate(Type = ifelse(Notebook_GPU, "Yes", "No"),
@@ -122,7 +131,7 @@ pie_notebook <- gpu_clean %>%
 
 print(pie_notebook)
 
-# 3. Bar Chart: Memory Type Frequency
+# 3. Bar Chart: Memory Type Frequency         
 bar_memtype <- ggplot(gpu_clean, aes(x = reorder(Memory_Type, Memory_Type, function(x) -length(x)))) +
   geom_bar(fill = "mediumseagreen", color = "black") +
   theme_minimal() +
@@ -178,9 +187,10 @@ p_pairs <- ggpairs(
   )
 
 print(p_pairs)
-
 boxplot<-gpu_clean
+                                                
 # 6. boxplot1: so sánh Max power theo Notebook GPU (gpu cho laptop (yes) hoặc desktop (no))
+
 boxplot$Form_Factor <- ifelse(boxplot$Notebook_GPU == TRUE, "Laptop GPU", "Desktop GPU")
 
 p_ttest <- ggplot(boxplot, aes(x = Form_Factor, y = Max_Power, fill = Form_Factor)) +

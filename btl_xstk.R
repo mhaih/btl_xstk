@@ -268,9 +268,11 @@ nvidia_coreSpeed <- subset(gpu_clean, Manufacturer == "Nvidia")$Core_Speed
 n <- length(nvidia_coreSpeed)
 cat("Kích thước mẫu là:", n)
 
+print("vẽ biểu đồ Q-Q kiểm tra phân phối chuẩn")
 qqnorm(nvidia_coreSpeed)
 qqline(nvidia_coreSpeed)
 
+print("shapiro test kiểm tra phân phối chuẩn")
 shapiro.test(nvidia_coreSpeed)
 
 n <- length(nvidia_coreSpeed)
@@ -305,11 +307,13 @@ amd_vram <- subset(gpu_clean, Manufacturer == "AMD")$Memory
 str(nvidia_vram)
 str(amd_vram)
 
+print("vẽ biểu đồ Q-Q kiểm tra phân phối chuẩn")
 qqnorm(nvidia_vram, main = "Q-Q Plot cho VRAM NVIDIA")
 qqline(nvidia_vram, col = "red")
 qqnorm(amd_vram, main = "Q-Q Plot cho VRAM AMD")
 qqline(amd_vram, col = "blue")
 
+print("shapiro test kiểm tra phân phối chuẩn")
 shapiro.test(nvidia_vram)
 shapiro.test(amd_vram)
 

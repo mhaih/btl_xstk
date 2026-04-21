@@ -37,7 +37,6 @@ gpu_data[] <- lapply(gpu_data, function(x) gsub("^\\n- $", NA, x))
 
 gpu_clean <- gpu_data %>%
   mutate(
-    # Xóa đơn vị và chuyển thành numeric
     Core_Speed = as.numeric(str_remove(Core_Speed, " MHz")),
     Max_Power = as.numeric(str_remove(Max_Power, " Watts")),
     Memory = as.numeric(str_remove(Memory, " MB")),
@@ -49,13 +48,10 @@ gpu_clean <- gpu_data %>%
                               as.numeric(str_extract(Memory_Bandwidth, "[\\d\\.]+")) / 1000,
                               as.numeric(str_extract(Memory_Bandwidth, "[\\d\\.]+"))),
     
-    # Xử lý ROPs
     ROPs = process_multiplier(ROPs),
-    # Chuẩn hóa các chuỗi rỗng hoặc "\n-" thành NA
     Manufacturer = ifelse(Manufacturer %in% c("", "\n-", " "), NA, trimws(Manufacturer)),
     Memory_Type = ifelse(Memory_Type %in% c("", "\n-", " "), NA, trimws(Memory_Type)),
     
-    # Chuyển Notebook_GPU thành Boolean (TRUE/FALSE)
     Notebook_GPU = ifelse(Notebook_GPU == "Yes", TRUE, FALSE)
  ) %>%
 filter(Manufacturer %in% c("Nvidia", "AMD", "Intel", "ATI"))

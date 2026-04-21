@@ -414,35 +414,47 @@ plot(tukey_2way, las = 1, col = "darkred")
 
 
 #Hồi quy tuyến tính
+cat("----------------------- HỒI QUY TUYẾN TÍNH BỘI -----------------------\n")
+cat("Bỏ qua một số biến phân loại, còn lại:\n")
 cols_to_ignore = c("Manufacturer", "Memory_Type", "Notebook_GPU")
 gpu_filter <- gpu_clean[, !(names(gpu_clean) %in% cols_to_ignore)]
-names(gpu_filter)
+print(names(gpu_filter))
 
+cat("Tìm các mô hình tốt nhất bằng tìm kiếm vét cạn:\n")
 best_models <- summary(regsubsets(Max_Power ~ ., data = gpu_filter))
-best_models$which
+print(best_models$which)
 
-best_models$adjr2
-which.max(best_models$adjr2)
+cat("Hệ số xác định điều chỉnh của các mô hình và mô hình tốt nhất:\n")
+print(best_models$adjr2)
+print(which.max(best_models$adjr2))
 
+cat("Xây dựng mô hình ban đầu:\n")
 base_model <- lm(Max_Power ~ ., data = gpu_filter)
-base_model
+print(base_model)
 
+cat("VIF của mô hình ban đầu:\n")
 vif(base_model)
 
+cat("VIF của mô hình rút gọn biến:\n")
 model_1 <- lm(Max_Power ~ . - Memory_Bandwidth, data = gpu_filter)
 vif(model_1)
 
+cat("Kiểm định hệ số hồi quy của biến đã rút gọn:\n")
 summary(base_model)$coefficients["Memory_Bandwidth",]
 
+cat("Kiểm định hệ số hồi quy tổng thể:\n")
 summary(base_model)$coefficients
 
 
 main_model <- base_model
 
+cat("Biểu đồ phần dư và biểu đồ Q-Q:\n")
 plot(main_model, which = 1)
 plot(main_model, which = 2)
 
+cat("Kiểm định Shapiro-Wilk và Breush-Pagan:\n")
 shapiro.test(main_model$residuals)
 bptest(main_model)
 
+cat("Đánh giá mô hình:\n")
 summary(main_model)

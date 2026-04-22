@@ -243,7 +243,10 @@ p_reg4 <- ggplot(boxplot, aes(x = TMUs, y = Memory_Bandwidth)) +
   theme(legend.position = "bottom")
 
 print(p_reg4)    
+
 cat("----------------------- KIỂM ĐỊNH 1 MẪU -----------------------")
+cat("Giả thuyết H0: a = 950 (Core Speed trung bình của Nvidia bằng 950)\n")
+cat("Đối thuyết H1: a > 950 (Core Speed trung bình của Nvidia lớn hơn 950)\n")
 nvidia_coreSpeed <- subset(gpu_clean, Manufacturer == "Nvidia")$Core_Speed
 n <- length(nvidia_coreSpeed)
 cat("Kích thước mẫu là:", n)
@@ -280,6 +283,8 @@ if(z_qs > z_alpha){
   cat (" Không bác bỏ H0: Không có đủ bằng chứng thóng kế\n")
 }
 cat("----------------------- KIỂM ĐỊNH 2 MẪU -----------------------")
+cat("Giả thuyết H0: a_1 <= a_2 (Dung lượng VRAM trung bình của NVIDIA không lớn hơn AMD)\n")
+cat("Đối thuyết H1: a_1 > a_2 (Dung lượng VRAM trung bình của NVIDIA thực sự lớn hơn AMD)\n")
 nvidia_vram <- subset(gpu_clean, Manufacturer == "Nvidia")$Memory
 amd_vram <- subset(gpu_clean, Manufacturer == "AMD")$Memory
 
@@ -331,6 +336,14 @@ cat("Độ lệch chuẩn (s2):   ", s2, "\n\n")
 cat("--- KẾT QUẢ TÍNH TOÁN ---\n")
 cat("Giá trị kiểm định z_qs: ", z_qs, "\n")
 
+
+if(z_qs > z_alpha){
+  cat("Vì z_qs > z_alpha nên ta Bác bỏ H0.\n")
+  cat("Kết luận: Có đủ bằng chứng thống kê để cho rằng VRAM trung bình của GPU Nvidia lớn hơn GPU AMD ở mức ý nghĩa 5%.\n")
+} else {
+  cat("Vì z_qs <= z_alpha nên ta Không bác bỏ H0.\n")
+  cat("Kết luận: Không có đủ bằng chứng thống kê để khẳng định VRAM trung bình của GPU Nvidia lớn hơn GPU AMD.\n")
+}
 
 
 

@@ -243,7 +243,7 @@ p_reg4 <- ggplot(boxplot, aes(x = TMUs, y = Memory_Bandwidth)) +
   theme(legend.position = "bottom")
 
 print(p_reg4)    
-
+cat("----------------------- KIỂM ĐỊNH 1 MẪU -----------------------")
 nvidia_coreSpeed <- subset(gpu_clean, Manufacturer == "Nvidia")$Core_Speed
 n <- length(nvidia_coreSpeed)
 cat("Kích thước mẫu là:", n)
@@ -279,7 +279,7 @@ if(z_qs > z_alpha){
 } else{
   cat (" Không bác bỏ H0: Không có đủ bằng chứng thóng kế\n")
 }
-
+cat("----------------------- KIỂM ĐỊNH 2 MẪU -----------------------")
 nvidia_vram <- subset(gpu_clean, Manufacturer == "Nvidia")$Memory
 amd_vram <- subset(gpu_clean, Manufacturer == "AMD")$Memory
 
@@ -335,7 +335,7 @@ cat("Giá trị kiểm định z_qs: ", z_qs, "\n")
 
 
 
-#ANOVA
+cat("----------------------- ANOVA -----------------------")
 df_2way <- gpu_clean %>%
   filter(Manufacturer != "ATI") %>% 
   group_by(Manufacturer, Notebook_GPU) %>%
@@ -344,46 +344,61 @@ df_2way <- gpu_clean %>%
   mutate(
     Manufacturer = as.factor(Manufacturer),
     Notebook_GPU = as.factor(ifelse(as.logical(Notebook_GPU), "Laptop", "Desktop"))
-  )
-df_2way <- df_2way %>%
+  ) %>%
   droplevels()
-cat("--- BẢNG TẦN SUẤT CÁC NHÓM TỔ HỢP ---\n")
-table(df_2way$Manufacturer, df_2way$Notebook_GPU)    
 
-ggplot(df_2way, aes(x = Notebook_GPU, y = Max_Power, color = Manufacturer, group = Manufacturer)) +
+cat("\n--- 1. KIỂM TRA ĐIỀU KIỆN CỠ MẪU CỦA CÁC TỔ HỢP ---")
+cat("\nMục tiêu: Đảm bảo dữ liệu đủ lớn ở mỗi nhóm (>20) để kết luận có ý nghĩa.\n")
+print(table(df_2way$Manufacturer, df_2way$Notebook_GPU))
+
+p_inter <- ggplot(df_2way, aes(x = Notebook_GPU, y = Max_Power, color = Manufacturer, group = Manufacturer)) +
   stat_summary(fun = mean, geom = "line", linewidth = 1.2, aes(group = Manufacturer)) + 
   stat_summary(fun = mean, geom = "point", size = 3) +
-  labs(title = "Interaction Plot: Manufacturer and Notebook GPU",
-       subtitle = "Lines connect mean Max Power between Laptop and Desktop",
-       x = "Device Type",
-       y = "Mean Max Power (W)") +
+  labs(title = "Biểu đồ Tương tác: Manufacturer và Loại thiết bị",
+       subtitle = "Đường nối giá trị trung bình công suất giữa Laptop và Desktop",
+       x = "Loại thiết bị", y = "Công suất trung bình (W)") +
   theme_minimal()
+print(p_inter)
 
-# 2. Boxplot to show distribution
-ggplot(df_2way, aes(x = Manufacturer, y = Max_Power, fill = Notebook_GPU)) +
+
+cat("\n[ĐANG VẼ: BIỂU ĐỒ BOXPLOT]\n")
+cat("Ghi chú: Quan sát độ trải rộng của dữ liệu và các giá trị ngoại lệ.\n")
+p_box <- ggplot(df_2way, aes(x = Manufacturer, y = Max_Power, fill = Notebook_GPU)) +
   geom_boxplot(alpha = 0.7) +
   labs(title = "Distribution of Max Power by Manufacturer and Device Type",
        x = "Manufacturer",
        y = "Max Power (W)") +
   theme_bw()
+print(p_box)
 
+
+cat("\n--- BƯỚC 2: KIỂM ĐỊNH CÁC GIẢ ĐỊNH ---")
 model_2way <- aov(Max_Power ~ Manufacturer * Notebook_GPU, data = df_2way)
 
-# 4.2. Kiểm định Levene (Đồng nhất phương sai)
-cat("--- 1. KIỂM ĐỊNH LEVENE ---\n")
+cat("\n[KIỂM ĐỊNH LEVENE - H0: Phương sai các nhóm bằng nhau]\n")
 print(leveneTest(Max_Power ~ Manufacturer * Notebook_GPU, data = df_2way))
 
-# 4.3. Đồ thị Q-Q Plot
-cat("\n--- 2. ĐỒ THỊ Q-Q PLOT ---\n")
+cat("\n--------------------------------------------------------------")
+cat("\n--- BƯỚC 2.2: KIỂM TRA GIẢ ĐỊNH PHÂN PHỐI CHUẨN ---")
+cat("\nMục tiêu: Đảm bảo phần dư (residuals) tuân theo phân phối chuẩn.")
+cat("\n--------------------------------------------------------------\n")
+
+cat("\n--- 1. ĐỒ THỊ Q-Q PLOT ---\n")
+cat("Cách đọc: Nếu các điểm dữ liệu nằm sát đường chéo, giả định phân phối chuẩn được thỏa mãn.\n")
 plot(model_2way, which = 2)
 
-shapiro.test(residuals(model_2way))
+cat("\n--- 2. KIỂM ĐỊNH SHAPIRO-WILK ---\n")
+cat("H0: Dữ liệu tuân theo phân phối chuẩn.")
+cat("\nNếu p-value > 0.05: Chấp nhận H0, dữ liệu có phân phối chuẩn.\n")
+print(shapiro.test(residuals(model_2way)))
 
-cat("\n--- 3. BẢNG KẾT QUẢ ANOVA 2 NHÂN TỐ ---\n")
+cat("\n--- BƯỚC 3: KẾT QUẢ ANOVA 2 NHÂN TỐ ---")
+cat("\nTrọng tâm: Xem dòng Manufacturer:Notebook_GPU để kết luận về sự tương tác.\n")
 print(summary(model_2way))
 
-cat("--- 4. KIỂM ĐỊNH HẬU ĐỊNH TUKEY HSD ---\n")
+cat("\n--- BƯỚC 4: KIỂM ĐỊNH HẬU ĐỊNH TUKEY HSD ---")
 tukey_2way <- TukeyHSD(model_2way)
+print(tukey_2way$`Manufacturer:Notebook_GPU`)
 
 par(mar=c(5, 15, 4, 2)) 
 plot(tukey_2way, las = 1, col = "darkred")
@@ -391,8 +406,6 @@ plot(tukey_2way, las = 1, col = "darkred")
 
 
 
-
-#Hồi quy tuyến tính
 cat("----------------------- HỒI QUY TUYẾN TÍNH BỘI -----------------------\n")
 cat("Bỏ qua một số biến phân loại, còn lại:\n")
 cols_to_ignore = c("Manufacturer", "Memory_Type", "Notebook_GPU")

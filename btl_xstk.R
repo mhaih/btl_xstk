@@ -1,4 +1,4 @@
-# 1. Cài thư viện
+
 library(dplyr)
 library(stringr)
 library(ggplot2)
@@ -68,15 +68,10 @@ cat("\n--- BẢNG TÓM TẮT DỮ LIỆU KHUYẾT THIẾU ---\n")
 print(na_summary)
 
 
-# Dựa vào bảng na_summary ở trên, nhóm đưa ra chiến lược xử lý như sau:
-# 1. Nhóm biến Memory_Bandwidth, Memory_Bus ... có tỷ lệ khuyết cực thấp 
-#    => Xóa các dòng khuyết (Drop NA) để giữ tính chân thực của dữ liệu mục tiêu.
-# 2. Nhóm biến Core_Speed, Process, Memory_Speed... có tỷ lệ khuyết nhiều
                      
 gpu_clean <- gpu_clean %>%
   drop_na(Memory_Type, Memory_Bus, Memory_Speed, Memory_Bandwidth)
 
-# 2. Fill Median cho Nhóm 3 (Các biến độc lập khuyết nhiều)
 gpu_clean <- gpu_clean %>%
   mutate(
     Core_Speed = ifelse(is.na(Core_Speed), median(Core_Speed, na.rm = TRUE), Core_Speed),
@@ -86,7 +81,6 @@ gpu_clean <- gpu_clean %>%
     TMUs = ifelse(is.na(TMUs), median(TMUs, na.rm = TRUE), TMUs),
     Max_Power = ifelse(is.na(Max_Power), median(Max_Power, na.rm = TRUE), Max_Power)
   )
-# Kiểm tra lại chắc chắn đã hết NA chưa
 cat("\n Kiểm tra sau khi làm sạch \n")
 print(colSums(is.na(gpu_clean)))
 
@@ -97,7 +91,6 @@ gpu_clean $ Memory_Type<-as.factor(gpu_clean$Memory_Type)
 summary(gpu_clean)
 
 
-# 1. Pie : manufacturer
 
 pie_manuf <- gpu_clean %>% 
   count(Manufacturer) %>% 
@@ -111,7 +104,6 @@ pie_manuf <- gpu_clean %>%
 
 print(pie_manuf)
 
-# 2. Pie Chart: Notebook GPU
 
 pie_notebook <- gpu_clean %>% 
   count(Notebook_GPU) %>% 
@@ -126,8 +118,7 @@ pie_notebook <- gpu_clean %>%
   labs(title = "       Proportion of Notebook GPUs", fill = "Form Factor")
 
 print(pie_notebook)
-
-# 3. Bar Chart: Memory Type Frequency         
+      
 bar_memtype <- ggplot(gpu_clean, aes(x = reorder(Memory_Type, Memory_Type, function(x) -length(x)))) +
   geom_bar(fill = "mediumseagreen", color = "black") +
   theme_minimal() +
@@ -136,7 +127,6 @@ bar_memtype <- ggplot(gpu_clean, aes(x = reorder(Memory_Type, Memory_Type, funct
 
 print(bar_memtype)
 
-#4. Histogram
 numeric_vars <- c("Core_Speed", "Max_Power", "Memory_Bandwidth", 
                   "Memory_Speed")
 units <- c("MHz", "Watts", "GB/s", "MHz")
@@ -167,7 +157,6 @@ for (i in seq_along(numeric_vars)) {
 
 
 
-#5.Pair plot
 vars_for_pairs <- gpu_clean %>% 
   select(Max_Power, Core_Speed,Memory, Memory_Bandwidth, Memory_Speed,Memory_Bus,Process, ROPs, TMUs)
 p_pairs <- ggpairs(
@@ -185,8 +174,6 @@ p_pairs <- ggpairs(
 print(p_pairs)
 boxplot<-gpu_clean
                                                 
-# 6. boxplot1: so sánh Max power theo Notebook GPU (gpu cho laptop (yes) hoặc desktop (no))
-
 boxplot$Form_Factor <- ifelse(boxplot$Notebook_GPU == TRUE, "Laptop GPU", "Desktop GPU")
 
 p_ttest <- ggplot(boxplot, aes(x = Form_Factor, y = Max_Power, fill = Form_Factor)) +
@@ -199,7 +186,6 @@ p_ttest <- ggplot(boxplot, aes(x = Form_Factor, y = Max_Power, fill = Form_Facto
 
 print(p_ttest)
 
-#7. box plot so sánh giữa 1 vài loại mem type 
 top_mem_types <- c("GDDR5", "GDDR3", "DDR3", "DDR2")
 gpu_anova_data <- gpu_clean %>% filter(Memory_Type %in% top_mem_types)
 
@@ -213,14 +199,11 @@ p_anova <- ggplot(gpu_anova_data, aes(x = reorder(Memory_Type, Max_Power, median
 
 print(p_anova)
 
-#8
 p_reg1 <- ggplot(boxplot, aes(x = Max_Power, y = Memory_Bandwidth)) +
   
-  # Vẽ Desktop trước (nằm dưới)
   geom_point(data = subset(boxplot, Form_Factor == "Desktop GPU"),
              color = "steelblue", alpha = 0.5) +
-  
-  # Vẽ Laptop sau (nằm trên)
+
   geom_point(data = subset(boxplot, Form_Factor == "Laptop GPU"),
              color = "tomato", alpha = 0.7) +
   
@@ -240,11 +223,9 @@ print(p_reg1)
 
 p_reg4 <- ggplot(boxplot, aes(x = TMUs, y = Memory_Bandwidth)) +
   
-  # Desktop (vẽ trước)
   geom_point(data = subset(boxplot, Form_Factor == "Desktop GPU"),
              color = "steelblue", alpha = 0.5) +
   
-  # Laptop (vẽ sau → nằm trên)
   geom_point(data = subset(boxplot, Form_Factor == "Laptop GPU"),
              color = "tomato", alpha = 0.7) +
   
@@ -263,7 +244,6 @@ p_reg4 <- ggplot(boxplot, aes(x = TMUs, y = Memory_Bandwidth)) +
 
 print(p_reg4)    
 
-#Kiểm định 1 mẫu
 nvidia_coreSpeed <- subset(gpu_clean, Manufacturer == "Nvidia")$Core_Speed
 n <- length(nvidia_coreSpeed)
 cat("Kích thước mẫu là:", n)
@@ -300,7 +280,6 @@ if(z_qs > z_alpha){
   cat (" Không bác bỏ H0: Không có đủ bằng chứng thóng kế\n")
 }
 
-#Kiểm định 2 mẫu
 nvidia_vram <- subset(gpu_clean, Manufacturer == "Nvidia")$Memory
 amd_vram <- subset(gpu_clean, Manufacturer == "AMD")$Memory
 
@@ -329,20 +308,16 @@ cat("Giá trị tới hạn z_alpha:", z_alpha, "\n")
 cat("Miền bác bỏ: W = (",z_alpha, "; +∞ )\n", sep="")
 
 
-# Tính toán các đặc trưng mẫu cho NVIDIA 
 n1 <- length(nvidia_vram)
 x1_bar <- mean(nvidia_vram)
 s1 <- sd(nvidia_vram)
 
-# Tính toán các đặc trưng mẫu cho AMD 
 n2 <- length(amd_vram)
 x2_bar <- mean(amd_vram)
 s2 <- sd(amd_vram)
 
-# Tính toán giá trị kiểm định U_{qs}
 z_qs <- (x1_bar - x2_bar) / sqrt((s1^2 / n1) + (s2^2 / n2))
 
-# Hiển thị bảng thông số tóm tắt
 cat("--- THÔNG SỐ MẪU NVIDIA ---\n")
 cat("Kích thước mẫu (n1): ", n1, "\n")
 cat("Trung bình (x1_bar):  ", x1_bar, " MB\n")
